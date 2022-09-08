@@ -130,11 +130,6 @@ class _AddNotePageState extends State<AddNotePage> {
           ),
           IconButton(
             onPressed: () {
-              // if (widget.isForEdit) {
-              //   Provider.of<NoteProvider>(context, listen: false)
-              //       .removeItem(widget.note?.id ?? '');
-              // }
-              // Navigator.of(context).pop();
               showDialog(
                 context: context,
                 builder: (context) {
