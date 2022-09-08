@@ -130,11 +130,42 @@ class _AddNotePageState extends State<AddNotePage> {
           ),
           IconButton(
             onPressed: () {
-              if (widget.isForEdit) {
-                Provider.of<NoteProvider>(context, listen: false)
-                    .removeItem(widget.note?.id ?? '');
-              }
-              Navigator.of(context).pop();
+              // if (widget.isForEdit) {
+              //   Provider.of<NoteProvider>(context, listen: false)
+              //       .removeItem(widget.note?.id ?? '');
+              // }
+              // Navigator.of(context).pop();
+              showDialog(
+                context: context,
+                builder: (context) {
+                  return AlertDialog(
+                    title: const Text('Are you sure?'),
+                    content: const Text('Do you want to delete this note?'),
+                    actions: [
+                      ElevatedButton(
+                        child: const Text('No'),
+                        onPressed: () => Navigator.of(context).pop(false),
+                      ),
+                      ElevatedButton(
+                        child: const Text('Yes'),
+                        onPressed: () {
+                          if (widget.isForEdit) {
+                            Provider.of<NoteProvider>(context, listen: false)
+                                .removeItem(widget.note?.id ?? '');
+                          }
+                          Navigator.of(context).pop();
+                          Navigator.of(context).pop();
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Note is deleted!'),
+                            ),
+                          );
+                        },
+                      ),
+                    ],
+                  );
+                },
+              );
             },
             icon: const Icon(Icons.delete),
           ),
