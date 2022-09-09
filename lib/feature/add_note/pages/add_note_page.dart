@@ -4,7 +4,6 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:notes_app/core/card_colors.dart';
 import 'package:notes_app/feature/add_note/modals/note.dart';
 import 'package:notes_app/feature/home/provider/note_provider.dart';
 import 'package:provider/provider.dart';
@@ -30,6 +29,7 @@ class _AddNotePageState extends State<AddNotePage> {
   late Note? _note;
   late Color? backgroundColor;
   late List<String> imagesPath;
+  final _random = math.Random();
 
   Future<void> pickImage(ImageSource imageType) async {
     try {
@@ -58,35 +58,45 @@ class _AddNotePageState extends State<AddNotePage> {
 
   Future<void> _onSave() async {
     if (_contentController.text.trim().isNotEmpty) {
+      final noteContent = _contentController.text.trim().split('\n');
+      final titleIndex = noteContent[0].indexOf('.');
+      final title = titleIndex < 0
+          ? noteContent[0]
+          : noteContent[0].substring(0, titleIndex + 1);
+      final content = titleIndex < 0
+          ? noteContent.sublist(1).join('\n')
+          : noteContent[0].substring(titleIndex + 1) +
+              noteContent.sublist(1).join('\n');
       if (!widget.isForEdit) {
-        final noteContent = _contentController.text.trim().split('\n');
-        final title = noteContent[0];
-        final content = noteContent.sublist(1).join('\n');
         final note = Note(
-          images: imagesPath,
-          id: DateTime.now().toString(),
           title: title,
           content: content,
+          images: imagesPath,
+          id: DateTime.now().toString(),
+          backgroundColor: backgroundColor?.value.toString() ?? '',
         );
         await Provider.of<NoteProvider>(context, listen: false).addNote(
           note: note,
         );
-        log(title);
-        log(content);
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('New note added')),
+        );
       } else {
-        // final noteContent = _contentController.text.trim().split('\n');
-        // final title = noteContent[0];
-        // final content = noteContent.skip(0).join('\n');
-        // final note = _note?.copyWith(
-        //   images: imagesPath,
-        //   id: DateTime.now().toString(),
-        //   title: title,
-        //   content: content,
-        // );
-        // await Provider.of<NoteProvider>(context, listen: false).addNote(
-        //   note: note!,
-        //   isForEdit: true,
-        // );
+        log(imagesPath.length.toString());
+        final note = _note?.copyWith(
+          title: title,
+          content: content,
+          images: imagesPath,
+        );
+        await Provider.of<NoteProvider>(context, listen: false).addNote(
+          note: note!,
+          isForEdit: true,
+        );
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Note edited')),
+        );
       }
       if (!mounted) return;
       Navigator.of(context).pop();
@@ -103,8 +113,12 @@ class _AddNotePageState extends State<AddNotePage> {
         : '';
     imagesPath = _note?.images ?? [];
     backgroundColor = widget.backround ??
-        CardColors
-            .cardsColor[math.Random().nextInt(CardColors.cardsColor.length)];
+        Color.fromARGB(
+          _random.nextInt(256),
+          _random.nextInt(256),
+          _random.nextInt(256),
+          _random.nextInt(256),
+        );
   }
 
   @override
@@ -119,6 +133,7 @@ class _AddNotePageState extends State<AddNotePage> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: backgroundColor,
+        elevation: 5,
         actions: [
           IconButton(
             onPressed: () => pickImage(ImageSource.camera),
@@ -130,37 +145,7 @@ class _AddNotePageState extends State<AddNotePage> {
           ),
           IconButton(
             onPressed: () {
-              showDialog(
-                context: context,
-                builder: (context) {
-                  return AlertDialog(
-                    title: const Text('Are you sure?'),
-                    content: const Text('Do you want to delete this note?'),
-                    actions: [
-                      ElevatedButton(
-                        child: const Text('No'),
-                        onPressed: () => Navigator.of(context).pop(false),
-                      ),
-                      ElevatedButton(
-                        child: const Text('Yes'),
-                        onPressed: () {
-                          if (widget.isForEdit) {
-                            Provider.of<NoteProvider>(context, listen: false)
-                                .removeItem(widget.note?.id ?? '');
-                          }
-                          Navigator.of(context).pop();
-                          Navigator.of(context).pop();
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Note is deleted!'),
-                            ),
-                          );
-                        },
-                      ),
-                    ],
-                  );
-                },
-              );
+              onDeleteNote(context);
             },
             icon: const Icon(Icons.delete),
           ),
@@ -177,17 +162,23 @@ class _AddNotePageState extends State<AddNotePage> {
                 itemCount: imagesPath.length,
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 3,
-                  childAspectRatio: 3 / 2,
-                  crossAxisSpacing: 5,
                   mainAxisSpacing: 5,
+                  crossAxisSpacing: 5,
+                  childAspectRatio: 3 / 2,
                 ),
                 itemBuilder: (context, index) {
-                  return DecoratedBox(
-                    decoration: BoxDecoration(
-                      borderRadius: const BorderRadius.all(Radius.circular(10)),
-                      image: DecorationImage(
-                        image: FileImage(File(imagesPath[index])),
-                        fit: BoxFit.cover,
+                  return InkWell(
+                    onLongPress: () {
+                      onDeleteImage(context, index);
+                    },
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        borderRadius:
+                            const BorderRadius.all(Radius.circular(10)),
+                        image: DecorationImage(
+                          image: FileImage(File(imagesPath[index])),
+                          fit: BoxFit.cover,
+                        ),
                       ),
                     ),
                   );
@@ -208,6 +199,73 @@ class _AddNotePageState extends State<AddNotePage> {
         onPressed: _onSave,
         child: const Icon(Icons.save),
       ),
+    );
+  }
+
+  Future<dynamic> onDeleteNote(BuildContext context) {
+    return showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Are you sure?'),
+          content: const Text('Do you want to delete this note?'),
+          actions: [
+            ElevatedButton(
+              child: const Text('No'),
+              onPressed: () => Navigator.of(context).pop(false),
+            ),
+            ElevatedButton(
+              child: const Text('Yes'),
+              onPressed: () {
+                if (widget.isForEdit) {
+                  Provider.of<NoteProvider>(context, listen: false)
+                      .removeItem(widget.note?.id ?? '');
+                }
+                Navigator.of(context).pop();
+                Navigator.of(context).pop();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Note is deleted!'),
+                  ),
+                );
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<dynamic> onDeleteImage(BuildContext context, int index) {
+    return showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Are you sure?'),
+          content: const Text('Do you want to delete this image?'),
+          actions: [
+            ElevatedButton(
+              child: const Text('No'),
+              onPressed: () => Navigator.of(context).pop(false),
+            ),
+            ElevatedButton(
+              child: const Text('Yes'),
+              onPressed: () {
+                setState(() {
+                  imagesPath.removeAt(index);
+                  log(imagesPath.toString());
+                  Navigator.of(context).pop();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Image is deleted!'),
+                    ),
+                  );
+                });
+              },
+            ),
+          ],
+        );
+      },
     );
   }
 }

@@ -22,6 +22,11 @@ class NoteProvider with ChangeNotifier {
       await noteBox.delete(noteId);
       _notes.removeWhere((notes) => notes.id == noteId);
     }
+    log(noteBox.values.length.toString());
+    log(_notes.length.toString());
+
+    log(noteBox.keys.toString());
+    log(noteId);
     notifyListeners();
   }
 
@@ -45,7 +50,6 @@ class NoteProvider with ChangeNotifier {
     } else {
       await noteBox.put(note.id, note);
       _notes.add(note);
-      log(noteBox.values.toList().toString());
     }
 
     notifyListeners();

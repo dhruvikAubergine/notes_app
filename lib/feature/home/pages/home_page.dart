@@ -1,7 +1,4 @@
-import 'dart:math';
-
 import 'package:flutter/material.dart';
-import 'package:notes_app/core/card_colors.dart';
 import 'package:notes_app/feature/add_note/pages/add_note_page.dart';
 import 'package:notes_app/feature/home/provider/note_provider.dart';
 import 'package:provider/provider.dart';
@@ -16,7 +13,6 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   late NoteProvider _noteProvider;
-  final _random = Random();
 
   @override
   void initState() {
@@ -29,7 +25,6 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    final cardColors = CardColors.cardsColor;
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
@@ -55,7 +50,8 @@ class _HomePageState extends State<HomePage> {
                 ),
                 itemBuilder: (context, index) {
                   final note = _noteProvider.getNotes[index];
-                  final color = cardColors[_random.nextInt(cardColors.length)];
+                  final color =
+                      Color(int.parse(note.backgroundColor ?? '0xFFFFFFFF'));
                   return Card(
                     color: color,
                     key: ValueKey(index),

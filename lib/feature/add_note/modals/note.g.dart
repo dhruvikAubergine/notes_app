@@ -19,15 +19,16 @@ class NoteAdapter extends TypeAdapter<Note> {
     return Note(
       id: fields[0] as String?,
       title: fields[1] as String?,
-      content: fields[2] as String?,
       images: (fields[3] as List?)?.cast<String>(),
+      content: fields[2] as String?,
+      backgroundColor: fields[4] as String?,
     );
   }
 
   @override
   void write(BinaryWriter writer, Note obj) {
     writer
-      ..writeByte(4)
+      ..writeByte(5)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -35,7 +36,9 @@ class NoteAdapter extends TypeAdapter<Note> {
       ..writeByte(2)
       ..write(obj.content)
       ..writeByte(3)
-      ..write(obj.images);
+      ..write(obj.images)
+      ..writeByte(4)
+      ..write(obj.backgroundColor);
   }
 
   @override
@@ -56,9 +59,10 @@ class NoteAdapter extends TypeAdapter<Note> {
 Note _$NoteFromJson(Map<String, dynamic> json) => Note(
       id: json['id'] as String?,
       title: json['title'] as String?,
-      content: json['content'] as String?,
       images:
           (json['images'] as List<dynamic>?)?.map((e) => e as String).toList(),
+      content: json['content'] as String?,
+      backgroundColor: json['backgroundColor'] as String?,
     );
 
 Map<String, dynamic> _$NoteToJson(Note instance) => <String, dynamic>{
@@ -66,4 +70,5 @@ Map<String, dynamic> _$NoteToJson(Note instance) => <String, dynamic>{
       'title': instance.title,
       'content': instance.content,
       'images': instance.images,
+      'backgroundColor': instance.backgroundColor,
     };
