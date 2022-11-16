@@ -39,6 +39,7 @@ class Note extends Equatable {
     return Note(
       id: id ?? this.id,
       title: title ?? this.title,
+      images: images ?? this.images,
       content: content ?? this.content,
       backgroundColor: backgroundColor ?? this.backgroundColor,
     );

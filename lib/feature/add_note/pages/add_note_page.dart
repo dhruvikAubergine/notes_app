@@ -61,43 +61,35 @@ class _AddNotePageState extends State<AddNotePage> {
       final noteContent = _contentController.text.trim().split('\n');
       final titleIndex = noteContent[0].indexOf('.');
       final title = titleIndex < 0
-          ? noteContent[0]
-          : noteContent[0].substring(0, titleIndex + 1);
+          ? noteContent[0].trim()
+          : noteContent[0].substring(0, titleIndex + 1).trim();
       final content = titleIndex < 0
-          ? noteContent.sublist(1).join('\n')
+          ? noteContent.sublist(1).join('\n').trim()
           : noteContent[0].substring(titleIndex + 1) +
-              noteContent.sublist(1).join('\n');
-      if (!widget.isForEdit) {
-        final note = Note(
-          title: title,
-          content: content,
-          images: imagesPath,
-          id: DateTime.now().toString(),
-          backgroundColor: backgroundColor?.value.toString() ?? '',
-        );
-        await Provider.of<NoteProvider>(context, listen: false).addNote(
-          note: note,
-        );
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('New note added')),
-        );
-      } else {
-        log(imagesPath.length.toString());
-        final note = _note?.copyWith(
-          title: title,
-          content: content,
-          images: imagesPath,
-        );
-        await Provider.of<NoteProvider>(context, listen: false).addNote(
-          note: note!,
-          isForEdit: true,
-        );
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Note edited')),
-        );
-      }
+              noteContent.sublist(1).join('\n').trim();
+
+      log('${imagesPath.length}');
+      final note = _note?.copyWith(
+            title: title,
+            content: content,
+            images: imagesPath,
+          ) ??
+          Note(
+            title: title,
+            content: content,
+            images: imagesPath,
+            id: DateTime.now().toString(),
+            backgroundColor: backgroundColor?.value.toString() ?? '',
+          );
+      await Provider.of<NoteProvider>(context, listen: false).addNote(
+        note: note,
+        isForEdit: widget.isForEdit,
+      );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Note edited')),
+      );
+
       if (!mounted) return;
       Navigator.of(context).pop();
     } else {
@@ -113,12 +105,13 @@ class _AddNotePageState extends State<AddNotePage> {
         : '';
     imagesPath = _note?.images ?? [];
     backgroundColor = widget.backround ??
-        Color.fromARGB(
-          _random.nextInt(256),
-          _random.nextInt(256),
-          _random.nextInt(256),
-          _random.nextInt(256),
-        );
+        Colors.primaries[_random.nextInt(Colors.primaries.length)].shade50;
+    // Color.fromARGB(
+    //   _random.nextInt(256),
+    //   _random.nextInt(256),
+    //   _random.nextInt(256),
+    //   _random.nextInt(256),
+    // ).withOpacity(0.1);
   }
 
   @override
@@ -187,6 +180,7 @@ class _AddNotePageState extends State<AddNotePage> {
             TextField(
               maxLines: null,
               controller: _contentController,
+              textCapitalization: TextCapitalization.sentences,
               decoration: const InputDecoration(
                 hintText: 'Note here',
                 border: InputBorder.none,
@@ -218,6 +212,7 @@ class _AddNotePageState extends State<AddNotePage> {
               child: const Text('Yes'),
               onPressed: () {
                 if (widget.isForEdit) {
+                  // Provider.of<NoteProvider>(context, listen: false).clear();
                   Provider.of<NoteProvider>(context, listen: false)
                       .removeItem(widget.note?.id ?? '');
                 }

@@ -13,6 +13,8 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   late NoteProvider _noteProvider;
+  final _scrollController = ScrollController();
+  final _gridViewKey = GlobalKey();
 
   @override
   void initState() {
@@ -34,6 +36,12 @@ class _HomePageState extends State<HomePage> {
         builder: (context, noteProvider, child) => noteProvider.getNotes.isEmpty
             ? const Center(child: Text('No Note available'))
             : ReorderableGridView.builder(
+                dragWidgetBuilder: (index, child) {
+                  return child;
+                },
+                placeholderBuilder: (dropIndex, dropInddex, dragWidget) {
+                  return dragWidget;
+                },
                 padding: const EdgeInsets.all(15),
                 itemCount: _noteProvider.getNotes.length,
                 onReorder: (oldIndex, newIndex) {
@@ -55,21 +63,22 @@ class _HomePageState extends State<HomePage> {
                   return Card(
                     color: color,
                     key: ValueKey(index),
-                    child: Padding(
-                      padding: const EdgeInsets.all(8),
-                      child: InkWell(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => AddNotePage(
-                                note: note,
-                                isForEdit: true,
-                                backround: color,
-                              ),
+                    child: InkWell(
+                      borderRadius: const BorderRadius.all(Radius.circular(15)),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => AddNotePage(
+                              note: note,
+                              isForEdit: true,
+                              backround: color,
                             ),
-                          );
-                        },
+                          ),
+                        );
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.all(8),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
